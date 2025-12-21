@@ -3,8 +3,6 @@ import User from "../models/user.model.js";
 import generateToken from "../utils/token.js";
 import bcrypt from "bcryptjs";
 import ApiError from '../utils/apiError.js';
-import { token } from "morgan";
-
 
 export const signUp = asyncHandler(async (req, res, next) => {
     const { name, email, username, password} = req.body;

@@ -5,7 +5,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 
-import errorHandler from './middlewares/error.middleware.js';
+import globalError from './middlewares/error.middleware.js';
 
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -17,22 +17,14 @@ connectDB();
 const app = express();
 
 app.use(express.json());
-
+app.use(cookieParser());
 app.use(cors({
     origin: "http://localhost:8001",
     methods: ['GET','POST'],
     credentials: true
 
 }));
-
-
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-
-
-// app.get('/', (req,res) => {
-//     res.send("Hello !");
-// })
 
 if(process.env.NODE_ENV === "development") {
     app.use(morgan('dev'));
@@ -41,11 +33,10 @@ if(process.env.NODE_ENV === "development") {
 import authRouter from './routes/auth.route.js';
 app.use('/api/auth', authRouter);
 
-
 app.all('/{*any}', (req,res,next) =>{
   next(new ApiError(`can not find this route: ${req.originalUrl}`,404))
 })
-app.use(errorHandler);
+app.use(globalError);
 
 const port = process.env.PORT || 8000;
 const server = app.listen(port, () => {

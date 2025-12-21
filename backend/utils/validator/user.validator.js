@@ -1,6 +1,4 @@
 import Joi from 'joi';
-import User from '../../models/user.model.js';
-import validate from '../../middlewares/validate.middleware.js'; 
 
 export const signUpSchema = Joi.object({
     name: Joi.string().min(3).max(30).required()
@@ -8,7 +6,6 @@ export const signUpSchema = Joi.object({
             'string.min':'Too short name must be at least 3 characters',
             'string.max': 'Too long name must be at most 30 characters',
             'any.required': 'Name is required'
-            
         }),
     username: Joi.string().alphanum().min(3).max(30).required()
         .messages({
@@ -36,7 +33,6 @@ export const signUpSchema = Joi.object({
             'any.only': 'Passwords do not match',
             'any.required': 'Password confirmation is required',
             'string.empty': 'Password confirmation must not be empty'
-
         })
 });
 
@@ -56,5 +52,4 @@ export const loginSchema = Joi.object({
             'any.required': 'Password is required',
             'string.empty': 'Password must not be empty'
         })
-    
 });

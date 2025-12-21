@@ -6,7 +6,6 @@ const validate = (schema) => {
                 stripUnknown: true 
             });
 
-           
             req.body = validatedData;
             
             next();

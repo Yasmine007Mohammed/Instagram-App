@@ -1,4 +1,4 @@
-const errorHandler = (err, req, res, next) => {
+const globalError = (err, req, res, next) => {
     err.statusCode = err.statusCode || 500;
     err.status = err.status || 'error';
 
@@ -6,8 +6,7 @@ const errorHandler = (err, req, res, next) => {
         return sendErrorForDev(err,res)
     }else{
         return errorForProduction(err,res)
-    }
-        
+    }   
 };
 
 const sendErrorForDev = (err,res) =>{
@@ -25,4 +24,4 @@ const errorForProduction = (err,res) =>{
         message: err.message,
         });
 }
-export default errorHandler;
+export default globalError;

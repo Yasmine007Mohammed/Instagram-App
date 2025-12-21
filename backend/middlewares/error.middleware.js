@@ -1,25 +1,28 @@
 const errorHandler = (err, req, res, next) => {
     err.statusCode = err.statusCode || 500;
-    err.status = err.status || "error";
+    err.status = err.status || 'error';
 
-    if(process.env.NODE_ENV === "development") {
-        res.status(err.statusCode).json({
+    if (process.env.NODE_ENV === 'development') {
+        return sendErrorForDev(err,res)
+    }else{
+        return errorForProduction(err,res)
+    }
+        
+};
+
+const sendErrorForDev = (err,res) =>{
+    res.status(err.statusCode).json({
         status: err.status,
-        error: err,
+        error: err ,
         message: err.message,
         stack: err.stack
     });
-    } else if(err.isOperational){
-        res.status(err.statusCode).json({
-            status: err.status,
-            message: err.message
+};
+
+const errorForProduction = (err,res) =>{
+    res.status(err.statusCode).json({
+        status: err.status,
+        message: err.message,
         });
-    } else {
-        console.error('ERROR', err);
-        res.status(500).json({
-        status: 'error',
-        message: 'Something went very wrong!'
-      });
-    }
 }
 export default errorHandler;

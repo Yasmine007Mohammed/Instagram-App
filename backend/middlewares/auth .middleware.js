@@ -3,7 +3,6 @@ import asynchandler from 'express-async-handler';
 import User from '../models/user.model';
 import apiError from '../utils/apiError';
 
-
 export const authMiddleware = asynchandler(async (req, res, next) => {
     // check if token exists
     const token = req.cookies.jwt;

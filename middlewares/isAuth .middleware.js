@@ -11,7 +11,11 @@ export const authMiddleware = asynchandler(async (req, res, next) => {
     }
 
     // verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+
+    req.userId = decoded.userId;
+    next();
+    
     if (!decoded) {
         return next(new apiError('Invalid token, please login again', 401));
     }

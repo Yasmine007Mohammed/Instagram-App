@@ -34,7 +34,7 @@ export const signup = asyncHandler(async (req, res, next) => {
 export const login = asyncHandler(async (req, res, next) => {
     const { username , password } = req.body;
     const user = await User.findOne({ username });
-    if(!user || !(await bcrypt.compare(password, user.password))){
+    if(!user || !(await user.comparePassword(password))){
         return next(new ApiError('Invalid username or password', 401));
     }
 
@@ -92,8 +92,8 @@ export const forgotPassword = asyncHandler(async (req, res, next) => {
     await user.save();
 
     const message = ` Hi ${user.name} 
-    /n <p>You requested a password reset for your account ${user.email}. 
-    /n Use the following OTP to reset your password:</p>
+     <p>You requested a password reset for your account ${user.email}. 
+     Use the following OTP to reset your password:</p>
         <h2>${otp}</h2>
         <p>This OTP is valid for 5 minutes.</p>
     `;
@@ -102,7 +102,7 @@ export const forgotPassword = asyncHandler(async (req, res, next) => {
         await sendEmail({
         email: user.email,
         subject: "Password Reset OTP",
-        message: message
+        html: message
     });
     } catch (error) {
         user.resetOtp = undefined;

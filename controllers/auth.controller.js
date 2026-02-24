@@ -1,14 +1,11 @@
 import asyncHandler from "express-async-handler";
+import sendEmail from "../utils/sendEmail.js";
 import User from "../models/user.model.js";
-import generateToken from "../utils/token.js";
+import generateToken from "../utils/createToken.js";
 import bcrypt from "bcryptjs";
 import ApiError from '../utils/apiError.js';
 
-const configCookieOptions = {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'Strict',
-}
+// import { use } from "passport";
 
 export const signup = asyncHandler(async (req, res, next) => {
     const { name, email, username, password} = req.body;
@@ -43,7 +40,7 @@ export const login = asyncHandler(async (req, res, next) => {
 
     if(user) {
         generateToken(user._id, res);
-        res.status(201).json({ data: user });
+        res.status(200).json({ data: user });
     }
 });
 
@@ -77,3 +74,82 @@ export const logout = async(req, res) =>{
     res.clearCookie("jwt");
     return res.status(200).json({ message: "logged out successfully" });
 }
+
+export const forgotPassword = asyncHandler(async (req, res, next) => {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if(!user){
+        return next(new ApiError(`No user found with this email ${email}`, 404));
+    }
+
+    // generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    user.resetOtp = otp;
+    user.otpExpires = Date.now() + 5 * 60 * 1000; 
+    user.isOtpVerified = false;
+
+    await user.save();
+
+    const message = ` Hi ${user.name} 
+    /n <p>You requested a password reset for your account ${user.email}. 
+    /n Use the following OTP to reset your password:</p>
+        <h2>${otp}</h2>
+        <p>This OTP is valid for 5 minutes.</p>
+    `;
+
+    try {
+        await sendEmail({
+        email: user.email,
+        subject: "Password Reset OTP",
+        message: message
+    });
+    } catch (error) {
+        user.resetOtp = undefined;
+        user.otpExpires = undefined;
+        user.isOtpVerified = undefined;
+
+        await user.save();
+        return next(new ApiError('Failed to send OTP email, please try again later', 500));
+    }
+     res.status(200).json({ message: "OTP sent to email successfully" });
+});
+
+export const verifyOtp = asyncHandler(async (req, res, next) => {
+    const { email, otp } = req.body;
+    const user = await User.findOne({ email }).select('+resetOtp +otpExpires +isOtpVerified');
+    if(!user){
+        return next(new ApiError(`No user found with this email ${email}`, 404));
+    } 
+    if(user.resetOtp !== otp || user.otpExpires < Date.now()){
+        return next(new ApiError('Invalid OTP or expired', 400))
+    }
+
+    user.isOtpVerified = true;
+    user.resetOtp = undefined;
+    user.otpExpires = undefined;
+
+    await user.save();
+
+    res.status(200).json({ message: "OTP verified successfully" });
+});
+
+export const resetPassword = asyncHandler(async (req, res, next) => {
+    const { email, newPassword } = req.body;
+    const user = await User.findOne({ email }).select('+isOtpVerified');
+    if(!user){
+        return next(new ApiError(`No user found with this email ${email}`, 404));
+    }
+    if(!user.isOtpVerified){
+        return next(new ApiError('OTP not verified', 400));
+    }
+    user.password = newPassword;
+    user.isOtpVerified = false;
+
+    await user.save();
+
+    if(user) {
+        generateToken(user._id, res);
+    }
+    res.status(200).json({ message: "Password reset successfully" });
+})

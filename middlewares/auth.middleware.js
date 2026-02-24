@@ -5,15 +5,12 @@ import apiError from '../utils/apiError.js';
 
 const auth = asynchandler(async (req, res, next) => {
     // check if token exists
-    console.log('All cookies:', req.cookies); // 👈 شوف وش يجيك
-    console.log('Headers:', req.headers);
     const token = req.cookies.jwt;
     if (!token) {
         return next(new apiError('No token found, please login to access this route', 401));
     }
 
     // verify token
-    
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
     if (!decoded) {
         return next(new apiError('Invalid or Expired token, please login again', 401));
